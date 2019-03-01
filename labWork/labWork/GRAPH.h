@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#define maxn 1 << 20
+#define maxn 1 << 10
 
 using namespace std;
 

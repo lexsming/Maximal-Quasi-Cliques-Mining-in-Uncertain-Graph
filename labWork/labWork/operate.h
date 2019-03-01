@@ -18,6 +18,8 @@ public:
 	void insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH ggraph);
 	void delete_from_vertex_set_X(int delete_vertex_no, GRAPH ggraph);
 	void delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH ggraph);
+	int judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH ggraph);
+
 	operate();
 	~operate();
 };
