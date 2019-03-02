@@ -4,6 +4,7 @@
 
 GRAPH::GRAPH()
 {
+	memset(is_vertex_removed, 0, sizeof is_vertex_removed);
 }
 
 
@@ -44,8 +45,5 @@ void GRAPH::store_graph(string graph_file_address, GRAPH pre_graph)
 
 			} while (c != ' '&&c != '\n');
 		}
-
-
-
 	}
 }

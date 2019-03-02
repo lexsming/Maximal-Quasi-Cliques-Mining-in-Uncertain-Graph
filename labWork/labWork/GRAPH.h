@@ -18,6 +18,10 @@ class GRAPH
 public:
 	int vertex_num, edge_num;
 	vector<struct EDGE> graph[maxn];
+	bool is_vertex_removed[maxn];/*
+								 0 not removed
+								 1 have removed
+								 */
 	GRAPH();
 	~GRAPH();
 	void store_graph(string graph_file_address, GRAPH pre_graph);

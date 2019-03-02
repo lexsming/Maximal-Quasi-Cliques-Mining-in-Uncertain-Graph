@@ -12,7 +12,7 @@ operate::~operate()
 	vertex_set_CandX.clear();
 }
 
-void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH ggraph)
+void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 {
 	if (vertex_position[insert_vertex_no] == 2)
 	{
@@ -26,7 +26,8 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH ggraph)
 	{
 		if (vertex_position[ggraph.graph[insert_vertex_no][i].to_vertex_no] == 0)
 		{
-			insert_into_vertex_set_CandX(ggraph.graph[insert_vertex_no][i].to_vertex_no, ggraph);
+			if (ggraph.is_vertex_removed[ggraph.graph[insert_vertex_no][i].to_vertex_no] == 0)
+				insert_into_vertex_set_CandX(ggraph.graph[insert_vertex_no][i].to_vertex_no, ggraph);
 		}
 		if (vertex_position[ggraph.graph[insert_vertex_no][i].to_vertex_no] != 1)
 		{
@@ -35,20 +36,21 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH ggraph)
 			{
 				if (vertex_position[ggraph.graph[now_vertex_no][j].to_vertex_no] == 0)
 				{
-					insert_into_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
+					if (ggraph.is_vertex_removed[ggraph.graph[now_vertex_no][j].to_vertex_no] == 0)
+						insert_into_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
 				}
 			}
 		}
 	}
 }
 
-void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH ggraph)
+void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH &ggraph)
 {
 	vertex_position[insert_vertex_no] = 2;
 	vertex_set_CandX.insert(insert_vertex_no);
 }
 
-void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH ggraph)
+void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 {
 	vertex_position[delete_vertex_no] = 0;
 	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
@@ -90,13 +92,49 @@ void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH ggraph)
 	}
 }
 
-void operate::delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH ggraph)
+void operate::delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH &ggraph)
 {
 	vertex_position[delete_vertex_no] = 0;
 	vertex_set_CandX.erase(delete_vertex_no);
 }
 
-int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH ggraph)
+void operate::vertex_remove_on_minSize(int min_size, double gamma, GRAPH &ggraph)
+{
+	int minDeg_num = (int)(gamma * (min_size - 1));
+	if (1.0*gamma*(min_size - 1) - minDeg_num > 0)
+		minDeg_num++;
+	
+	for (int i = 0; i < ggraph.vertex_num; i++)
+	{
+		if (ggraph.is_vertex_removed[i] == 0)
+			vertex_judge_by_minSize(i, minDeg_num, ggraph);
+	}
+}
+
+void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, GRAPH &ggraph)
+{
+	if (ggraph.graph[vertex_no].size() >= minDeg_num)
+		return;
+	ggraph.is_vertex_removed[vertex_no] = 1;
+	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
+	{
+		int dis_vertex_no = ggraph.graph[vertex_no][i].to_vertex_no;
+		double dis_vertex_pro = ggraph.graph[vertex_no][i].probability;
+		for (int j = 0; j < ggraph.graph[dis_vertex_no].size(); j++)
+		{
+			if (ggraph.graph[dis_vertex_no][j].to_vertex_no == vertex_no)
+			{
+				ggraph.graph[dis_vertex_no].erase(ggraph.graph[dis_vertex_no].begin() + j);
+				break;
+			}
+		}
+		if (ggraph.graph[dis_vertex_no].size() < minDeg_num)
+			vertex_judge_by_minSize(dis_vertex_no, minDeg_num, ggraph);
+	}
+	return;
+}
+
+int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 {
 	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
 	{
