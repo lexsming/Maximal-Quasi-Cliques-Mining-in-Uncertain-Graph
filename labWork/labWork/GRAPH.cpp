@@ -41,7 +41,7 @@ void GRAPH::store_graph(string graph_file_address, GRAPH pre_graph)
 			}
 			edgeTmp.to_vertex_no = (int)num;
 			do {
-				c == getc(in);
+				c = getc(in);
 
 			} while (c != ' '&&c != '\n');
 		}

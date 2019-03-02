@@ -2,7 +2,7 @@
 
 operate::operate()
 {
-	memset(vertex_position, 0, sizeof vertex_position);
+	memset(OPvertex, 0, sizeof OPvertex);
 }
 
 
@@ -14,27 +14,33 @@ operate::~operate()
 
 void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 {
-	if (vertex_position[insert_vertex_no] == 2)
+	if (OPvertex[insert_vertex_no].vertex_position == 2)
 	{
 		vertex_set_CandX.erase(insert_vertex_no);
+		for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
+		{
+			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
+		}
 	}
 	
-	vertex_position[insert_vertex_no] = 1;
+	OPvertex[insert_vertex_no].vertex_position = 1;
 	vertex_set_X.insert(insert_vertex_no);
 
 	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
 	{
-		if (vertex_position[ggraph.graph[insert_vertex_no][i].to_vertex_no] == 0)
+		OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].indeg_vertex_set_X++;
+
+		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 0)
 		{
 			if (ggraph.is_vertex_removed[ggraph.graph[insert_vertex_no][i].to_vertex_no] == 0)
 				insert_into_vertex_set_CandX(ggraph.graph[insert_vertex_no][i].to_vertex_no, ggraph);
 		}
-		if (vertex_position[ggraph.graph[insert_vertex_no][i].to_vertex_no] != 1)
+		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 1)
 		{
 			int now_vertex_no = ggraph.graph[insert_vertex_no][i].to_vertex_no;
 			for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
 			{
-				if (vertex_position[ggraph.graph[now_vertex_no][j].to_vertex_no] == 0)
+				if (OPvertex[ggraph.graph[now_vertex_no][j].to_vertex_no].vertex_position == 0)
 				{
 					if (ggraph.is_vertex_removed[ggraph.graph[now_vertex_no][j].to_vertex_no] == 0)
 						insert_into_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
@@ -46,16 +52,22 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 
 void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH &ggraph)
 {
-	vertex_position[insert_vertex_no] = 2;
+	OPvertex[insert_vertex_no].vertex_position = 2;
 	vertex_set_CandX.insert(insert_vertex_no);
+	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
+	{
+		OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX++;
+	}
 }
 
 void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 {
-	vertex_position[delete_vertex_no] = 0;
+	OPvertex[delete_vertex_no].vertex_position = 0;
 	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
 	{
-		if (vertex_position[ggraph.graph[delete_vertex_no][i].to_vertex_no] == 1)
+		OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].indeg_vertex_set_X--;
+
+		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position == 1)
 			continue;
 		int judge_ans = judge_isIn_VerterSetX_inDiameter2(ggraph.graph[delete_vertex_no][i].to_vertex_no, ggraph);
 		if (judge_ans == 1)
@@ -94,8 +106,13 @@ void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 
 void operate::delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH &ggraph)
 {
-	vertex_position[delete_vertex_no] = 0;
+	OPvertex[delete_vertex_no].vertex_position = 0;
 	vertex_set_CandX.erase(delete_vertex_no);
+
+	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
+	{
+		OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
+	}
 }
 
 void operate::vertex_remove_on_minSize(int min_size, double gamma, GRAPH &ggraph)
@@ -138,7 +155,7 @@ int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 {
 	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
 	{
-		if (vertex_position[ggraph.graph[vertex_no][i].to_vertex_no] == 1)
+		if (OPvertex[ggraph.graph[vertex_no][i].to_vertex_no].vertex_position == 1)
 		{
 			return 1;
 		}
@@ -148,7 +165,7 @@ int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 		int now_vertex_no = ggraph.graph[vertex_no][i].to_vertex_no;
 		for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
 		{
-			if (vertex_position[ggraph.graph[now_vertex_no][j].to_vertex_no] == 1)
+			if (OPvertex[ggraph.graph[now_vertex_no][j].to_vertex_no].vertex_position == 1)
 				return 2;
 		}
 	}
