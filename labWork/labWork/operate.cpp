@@ -3,6 +3,7 @@
 operate::operate()
 {
 	memset(OPvertex, 0, sizeof OPvertex);
+	min_deg_vertex.min_deg = maxn;
 }
 
 
@@ -17,9 +18,12 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 	if (OPvertex[insert_vertex_no].vertex_position == 2)
 	{
 		vertex_set_CandX.erase(insert_vertex_no);
+		OPvertex[insert_vertex_no].indeg_vertex_set_X = 0;
+		OPvertex[insert_vertex_no].exdeg_vertex_set_CandX = 0;
 		for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
 		{
-			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
+			if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 0)
+				OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
 		}
 	}
 	
@@ -28,7 +32,8 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 
 	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
 	{
-		OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].indeg_vertex_set_X++;
+		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 0)
+			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].indeg_vertex_set_X++;
 
 		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 0)
 		{
@@ -47,7 +52,16 @@ void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
 				}
 			}
 		}
+
+		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 1)
+		{
+			OPvertex[insert_vertex_no].indeg_vertex_set_X++;
+		}
+		else if(OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 2)
+			OPvertex[insert_vertex_no].exdeg_vertex_set_CandX++;
 	}
+
+
 }
 
 void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH &ggraph)
@@ -56,16 +70,29 @@ void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH &ggraph)
 	vertex_set_CandX.insert(insert_vertex_no);
 	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
 	{
-		OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX++;
+		if (ggraph.graph[insert_vertex_no][i].to_vertex_no)
+			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX++;
+
+		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 1)
+		{
+			OPvertex[insert_vertex_no].indeg_vertex_set_X++;
+		}
+		else if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 2)
+			OPvertex[insert_vertex_no].exdeg_vertex_set_CandX++;
 	}
 }
 
 void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 {
 	OPvertex[delete_vertex_no].vertex_position = 0;
+	OPvertex[delete_vertex_no].indeg_vertex_set_X = 0;
+	OPvertex[delete_vertex_no].exdeg_vertex_set_CandX = 0;
+	vertex_set_X.erase(delete_vertex_no);
+
 	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
 	{
-		OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].indeg_vertex_set_X--;
+		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position != 0)
+			OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].indeg_vertex_set_X--;
 
 		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position == 1)
 			continue;
@@ -107,11 +134,14 @@ void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 void operate::delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH &ggraph)
 {
 	OPvertex[delete_vertex_no].vertex_position = 0;
+	OPvertex[delete_vertex_no].indeg_vertex_set_X = 0;
+	OPvertex[delete_vertex_no].exdeg_vertex_set_CandX = 0;
 	vertex_set_CandX.erase(delete_vertex_no);
 
 	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
 	{
-		OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
+		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position != 0)
+			OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
 	}
 }
 
@@ -151,6 +181,106 @@ void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, GRAPH &ggra
 	return;
 }
 
+void operate::find_minDeg_in_set_X(double gamma)
+{
+	set <int>::iterator it;
+	total_indeg_set_X = 0;
+	for (it = vertex_set_X.begin(); it != vertex_set_X.end(); it++)
+	{
+		if (OPvertex[*it].indeg_vertex_set_X + OPvertex[*it].exdeg_vertex_set_CandX < min_deg_vertex.min_deg)
+		{
+			min_deg_vertex.min_deg = OPvertex[*it].indeg_vertex_set_X + OPvertex[*it].exdeg_vertex_set_CandX;
+			min_deg_vertex.vertex_no = *it;
+		}
+		total_indeg_set_X += OPvertex[*it].indeg_vertex_set_X;
+	}
+	upper_bound_Umin_X = (int)(1.0*min_deg_vertex.min_deg / gamma) + 1 - vertex_set_X.size();
+
+	int *maxT_indeg_CandX = new int[upper_bound_Umin_X];
+
+	int num = 0;
+	for (it = vertex_set_CandX.begin(); it != vertex_set_CandX.end(); it++, num++)
+	{
+		if (num > upper_bound_Umin_X - 1)
+		{
+			int temp = OPvertex[*it].indeg_vertex_set_X;
+			if (temp > maxT_indeg_CandX[0]) 
+			{
+				maxT_indeg_CandX[0] = temp;
+				Min_heap_Adjust(maxT_indeg_CandX, 0, upper_bound_Umin_X - 1);
+			}
+		}
+		else 
+		{
+			int temp = OPvertex[*it].indeg_vertex_set_X;
+			maxT_indeg_CandX[num] = temp;
+			if (num == upper_bound_Umin_X - 1)//bulid Min_heap
+			{
+				for (int j = (upper_bound_Umin_X - 1 - 1) / 2; j >= 0; j--)
+					Min_heap_Adjust(maxT_indeg_CandX, j, upper_bound_Umin_X - 1);
+			}
+		}
+	}
+	Min_heap_Sort(maxT_indeg_CandX, 0, upper_bound_Umin_X - 1);
+	int total_indeg_set_CandX = 0;
+	for (int i = 0; i < upper_bound_Umin_X; i++)
+		total_indeg_set_CandX += maxT_indeg_CandX[i];
+	
+	int setX_size = vertex_set_X.size();
+	int product = (int)(1.0*gamma*(setX_size + upper_bound_Umin_X - 1));
+	if (product < 1.0*gamma*(setX_size + upper_bound_Umin_X - 1))
+		product++;
+	product *= setX_size;
+	if (total_indeg_set_X + total_indeg_set_CandX >= product)
+		upper_bound_UX = upper_bound_Umin_X;
+	else
+	{
+		for (int i = 0; i < upper_bound_Umin_X; i++)
+		{
+			total_indeg_set_CandX -= maxT_indeg_CandX[upper_bound_Umin_X - 1 - i];
+			product = (int)(1.0*gamma*(setX_size + upper_bound_Umin_X - 1 - i - 1));
+			if (product < 1.0*gamma*(setX_size + upper_bound_Umin_X - 1 - i - 1))
+				product++;
+			product *= setX_size;
+			if (total_indeg_set_X + total_indeg_set_CandX >= product)
+			{
+				upper_bound_UX = upper_bound_Umin_X - i - 1;
+				break;
+			}
+		}
+	}
+
+	delete[] maxT_indeg_CandX;
+}
+
+void operate::Min_heap_Adjust(int *arr, int start, int end)
+{
+	int i = start * 2 + 1;
+	while (i <= end) 
+	{
+		if (i + 1 <= end && arr[i] > arr[i + 1])
+			i++;
+		if (arr[start] > arr[i]) 
+		{
+			swap(arr[start], arr[i]);
+			start = i;
+			i = 2 * start + 1;
+		}
+		else break;
+	}
+}
+
+void operate::Min_heap_Sort(int *arr, int start, int end)
+{
+	for (int i = (end - 1) / 2; i >= 0; i--)
+		Min_heap_Adjust(arr, i, end);
+	for (int i = end; i - 1 >= 0; i--) 
+	{
+		swap(arr[i], arr[0]);
+		Min_heap_Adjust(arr, 0, i - 1);
+	}
+}
+
 int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 {
 	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
@@ -175,3 +305,5 @@ int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 			 return 2: in diameter 2 have vertex in X
 			 */
 }
+
+
