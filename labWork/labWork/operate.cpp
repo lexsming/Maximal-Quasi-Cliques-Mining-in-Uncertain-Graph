@@ -181,7 +181,7 @@ void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, GRAPH &ggra
 	return;
 }
 
-void operate::find_minDeg_in_set_X(double gamma)
+void operate::find_UpperBound_in_set_X(double gamma)
 {
 	set <int>::iterator it;
 	total_indeg_set_X = 0;
@@ -235,7 +235,8 @@ void operate::find_minDeg_in_set_X(double gamma)
 		upper_bound_UX = upper_bound_Umin_X;
 	else
 	{
-		for (int i = 0; i < upper_bound_Umin_X; i++)
+		int i = 0;
+		for (; i < upper_bound_Umin_X; i++)
 		{
 			total_indeg_set_CandX -= maxT_indeg_CandX[upper_bound_Umin_X - 1 - i];
 			product = (int)(1.0*gamma*(setX_size + upper_bound_Umin_X - 1 - i - 1));
@@ -248,9 +249,63 @@ void operate::find_minDeg_in_set_X(double gamma)
 				break;
 			}
 		}
+		if (i == upper_bound_Umin_X)
+			upper_bound_UX = 0;
 	}
 
 	delete[] maxT_indeg_CandX;
+}
+
+void operate::find_LowerBound_in_set_X(double gamma)
+{
+	set <int>::iterator it;
+	int min_indeg_in_set_X = maxn;
+	total_indeg_set_X = 0;
+	for (it = vertex_set_X.begin(); it != vertex_set_X.end(); it++)
+	{
+		min_indeg_in_set_X = min(min_indeg_in_set_X, OPvertex[*it].indeg_vertex_set_X);
+		total_indeg_set_X += OPvertex[*it].indeg_vertex_set_X;
+	}
+	int size_X = vertex_set_X.size();
+	for (int i = 0;; i++)
+	{
+		int product = (int)(1.0*gamma*(size_X + i - 1));
+		if (product < 1.0*gamma*(size_X + i - 1))
+			product++;
+		if (min_indeg_in_set_X + i >= product)
+		{
+			Lower_bound_Lmin_X = i;
+			break;
+		}
+	}
+	int size_CandX = vertex_set_CandX.size();
+	int *maxN_indeg_CandX = new int[size_CandX];
+	int num = 0, total_indeg_set_CandX = 0;
+	for (it = vertex_set_CandX.begin(); it != vertex_set_CandX.end(); it++, num++)
+	{
+		maxN_indeg_CandX[num] = OPvertex[*it].indeg_vertex_set_X;
+	}
+	sort(maxN_indeg_CandX, maxN_indeg_CandX + size_CandX);//indeg in CandX increment
+	for (int i = 0; i < Lower_bound_Lmin_X - 1; i++)
+		total_indeg_set_CandX += maxN_indeg_CandX[size_CandX - 1 - i];
+	int i;
+	for (i = Lower_bound_Lmin_X - 1; i < size_CandX; i++)
+	{
+		total_indeg_set_CandX += maxN_indeg_CandX[size_CandX - 1 - i];
+		int product = (int)(1.0*gamma*(size_X + i));
+		if (product < 1.0*gamma*(size_X + i))
+			product++;
+		product *= size_X;
+		if (total_indeg_set_X + total_indeg_set_CandX >= product)
+		{
+			Lower_bound_UX = i + 1;
+			break;
+		}
+	}
+	if (i == size_CandX)
+		Lower_bound_UX = size_CandX + 1;
+
+	delete[] maxN_indeg_CandX;
 }
 
 void operate::Min_heap_Adjust(int *arr, int start, int end)
