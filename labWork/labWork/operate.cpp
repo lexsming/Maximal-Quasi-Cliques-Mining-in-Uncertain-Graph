@@ -6,94 +6,48 @@ operate::operate()
 	min_deg_vertex.min_deg = maxn;
 }
 
-
 operate::~operate()
 {
 	vertex_set_X.clear();
 	vertex_set_CandX.clear();
 }
 
-void operate::insert_into_vertex_set_X(int insert_vertex_no, GRAPH &ggraph)
+void operate::vertex_remove_on_minSize(int min_size, double gamma, int vertex_num, int edge_num, PRE_VERTEX *pre_vertex, EDGE *pre_edge)
 {
-	if (OPvertex[insert_vertex_no].vertex_position == 2)
+	int minDeg_num = (int)(gamma * (min_size - 1));
+	if (1.0*gamma*(min_size - 1) - minDeg_num > 0)
+		minDeg_num++;
+
+	for (int i = 0; i < vertex_num; i++)
 	{
-		vertex_set_CandX.erase(insert_vertex_no);
-		OPvertex[insert_vertex_no].indeg_vertex_set_X = 0;
-		OPvertex[insert_vertex_no].exdeg_vertex_set_CandX = 0;
-		for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
-		{
-			if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 0)
-				OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
-		}
+		if (pre_vertex[i].is_removed == 0)
+			vertex_judge_by_minSize(i, minDeg_num, pre_vertex, pre_edge);
 	}
-	
-	OPvertex[insert_vertex_no].vertex_position = 1;
-	vertex_set_X.insert(insert_vertex_no);
-
-	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
-	{
-		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 0)
-			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].indeg_vertex_set_X++;
-
-		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 0)
-		{
-			if (ggraph.is_vertex_removed[ggraph.graph[insert_vertex_no][i].to_vertex_no] == 0)
-				insert_into_vertex_set_CandX(ggraph.graph[insert_vertex_no][i].to_vertex_no, ggraph);
-		}
-		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position != 1)
-		{
-			int now_vertex_no = ggraph.graph[insert_vertex_no][i].to_vertex_no;
-			for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
-			{
-				if (OPvertex[ggraph.graph[now_vertex_no][j].to_vertex_no].vertex_position == 0)
-				{
-					if (ggraph.is_vertex_removed[ggraph.graph[now_vertex_no][j].to_vertex_no] == 0)
-						insert_into_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
-				}
-			}
-		}
-
-		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 1)
-		{
-			OPvertex[insert_vertex_no].indeg_vertex_set_X++;
-		}
-		else if(OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 2)
-			OPvertex[insert_vertex_no].exdeg_vertex_set_CandX++;
-	}
-
-
+	return;
 }
 
-void operate::insert_into_vertex_set_CandX(int insert_vertex_no, GRAPH &ggraph)
+void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, PRE_VERTEX *pre_vertex, EDGE *pre_edge)
 {
-	OPvertex[insert_vertex_no].vertex_position = 2;
-	vertex_set_CandX.insert(insert_vertex_no);
-	for (int i = 0; i < ggraph.graph[insert_vertex_no].size(); i++)
+	if (pre_vertex[vertex_no].degree >= minDeg_num)
+		return;
+	pre_vertex[vertex_no].is_removed = 1;
+	int tem_edge_no = pre_vertex[vertex_no].first;
+	while (tem_edge_no != -1)
 	{
-		if (ggraph.graph[insert_vertex_no][i].to_vertex_no)
-			OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX++;
-
-		if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 1)
-		{
-			OPvertex[insert_vertex_no].indeg_vertex_set_X++;
-		}
-		else if (OPvertex[ggraph.graph[insert_vertex_no][i].to_vertex_no].vertex_position == 2)
-			OPvertex[insert_vertex_no].exdeg_vertex_set_CandX++;
+		int dis_vertex_no = pre_edge[tem_edge_no].to_vertex_no;
+		double dis_vertex_pro = pre_edge[tem_edge_no].probability;
+		if (pre_vertex[dis_vertex_no].is_removed == 0)
+			pre_vertex[dis_vertex_no].degree--;
+		if (pre_vertex[dis_vertex_no].degree < minDeg_num)
+			vertex_judge_by_minSize(dis_vertex_no, minDeg_num, pre_vertex, pre_edge);
 	}
+	return;
 }
 
 void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 {
-	OPvertex[delete_vertex_no].vertex_position = 0;
-	OPvertex[delete_vertex_no].indeg_vertex_set_X = 0;
-	OPvertex[delete_vertex_no].exdeg_vertex_set_CandX = 0;
-	vertex_set_X.erase(delete_vertex_no);
-
 	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
 	{
-		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position != 0)
-			OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].indeg_vertex_set_X--;
-
 		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position == 1)
 			continue;
 		int judge_ans = judge_isIn_VerterSetX_inDiameter2(ggraph.graph[delete_vertex_no][i].to_vertex_no, ggraph);
@@ -129,56 +83,6 @@ void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
 			}
 		}
 	}
-}
-
-void operate::delete_from_vertex_set_CandX(int delete_vertex_no, GRAPH &ggraph)
-{
-	OPvertex[delete_vertex_no].vertex_position = 0;
-	OPvertex[delete_vertex_no].indeg_vertex_set_X = 0;
-	OPvertex[delete_vertex_no].exdeg_vertex_set_CandX = 0;
-	vertex_set_CandX.erase(delete_vertex_no);
-
-	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
-	{
-		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position != 0)
-			OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].exdeg_vertex_set_CandX--;
-	}
-}
-
-void operate::vertex_remove_on_minSize(int min_size, double gamma, GRAPH &ggraph)
-{
-	int minDeg_num = (int)(gamma * (min_size - 1));
-	if (1.0*gamma*(min_size - 1) - minDeg_num > 0)
-		minDeg_num++;
-	
-	for (int i = 0; i < ggraph.vertex_num; i++)
-	{
-		if (ggraph.is_vertex_removed[i] == 0)
-			vertex_judge_by_minSize(i, minDeg_num, ggraph);
-	}
-}
-
-void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, GRAPH &ggraph)
-{
-	if (ggraph.graph[vertex_no].size() >= minDeg_num)
-		return;
-	ggraph.is_vertex_removed[vertex_no] = 1;
-	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
-	{
-		int dis_vertex_no = ggraph.graph[vertex_no][i].to_vertex_no;
-		double dis_vertex_pro = ggraph.graph[vertex_no][i].probability;
-		for (int j = 0; j < ggraph.graph[dis_vertex_no].size(); j++)
-		{
-			if (ggraph.graph[dis_vertex_no][j].to_vertex_no == vertex_no)
-			{
-				ggraph.graph[dis_vertex_no].erase(ggraph.graph[dis_vertex_no].begin() + j);
-				break;
-			}
-		}
-		if (ggraph.graph[dis_vertex_no].size() < minDeg_num)
-			vertex_judge_by_minSize(dis_vertex_no, minDeg_num, ggraph);
-	}
-	return;
 }
 
 void operate::find_UpperBound_in_set_X(double gamma)
@@ -336,23 +240,30 @@ void operate::Min_heap_Sort(int *arr, int start, int end)
 	}
 }
 
-int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
+int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, NOW_VERTEX *vertex, EDGE *edge)
 {
-	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
 	{
-		if (OPvertex[ggraph.graph[vertex_no][i].to_vertex_no].vertex_position == 1)
+		if (OPvertex[edge[pos].to_vertex_no].vertex_position == 1)
 		{
 			return 1;
 		}
+		pos = edge[pos].next;
 	}
-	for (int i = 0; i < ggraph.graph[vertex_no].size(); i++)
+
+	pos = vertex[vertex_no].first;
+	while (pos != -1)
 	{
-		int now_vertex_no = ggraph.graph[vertex_no][i].to_vertex_no;
-		for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
+		int vertex_now = edge[pos].to_vertex_no;
+		int pos1 = vertex[vertex_now].first;
+		while (pos1 != -1)
 		{
-			if (OPvertex[ggraph.graph[now_vertex_no][j].to_vertex_no].vertex_position == 1)
+			if (OPvertex[edge[pos1].to_vertex_no].vertex_position == 1)
 				return 2;
+			pos1 = edge[pos1].next;
 		}
+		pos = edge[pos].next;
 	}
 	return 0;/*
 			 return 0: in diameter 2 have no vertex in X
@@ -361,4 +272,244 @@ int operate::judge_isIn_VerterSetX_inDiameter2(int vertex_no, GRAPH &ggraph)
 			 */
 }
 
+AvlTree* operate::MakeEmpty(AvlTree* T)
+{
+	if (T != NULL)
+	{
+		MakeEmpty(T->left);
+		MakeEmpty(T->right);
+		free(T);
+	}
+	return NULL;
+}
 
+int operate::get_height(AvlTree* T)
+{
+	if (T == NULL)return -1;
+	else return T->Height;
+}
+
+AvlTree* operate::left_left(AvlTree* k1)
+{
+	//if(height(k1->left)-height(k1->right)<2)return k1;
+	AvlTree* k2 = k1->left;
+	k1->left = k2->right;
+	k2->right = k1;
+	k1->Height = max(get_height(k1->left), get_height(k1->right)) + 1;
+	k2->Height = max(get_height(k2->left), get_height(k2->right)) + 1;
+	return k2;
+}
+
+AvlTree* operate::right_right(AvlTree* k1)
+{
+	//if(height(k1->right)-height(k1->left)<2)return k1;
+	AvlTree* k2 = k1->right;
+	k1->right = k2->left;
+	k2->left = k1;
+	k1->Height = max(get_height(k1->left), get_height(k1->right)) + 1;
+	k2->Height = max(get_height(k2->left), get_height(k2->right)) + 1;
+	return k2;
+}
+
+AvlTree* operate::left_right(AvlTree* k1)
+{
+	k1->left = right_right(k1->left);
+	return left_left(k1);
+}
+
+AvlTree* operate::right_left(AvlTree* k1)
+{
+	k1->right = left_left(k1->right);
+	return right_right(k1);
+}
+
+void operate::Printf_tree(AvlTree* T)
+{
+	if (T->left != NULL)
+		Printf_tree(T->left);
+	printf("%d ", T->vertex_no);
+	if (T->right != NULL)
+		Printf_tree(T->right);
+}
+
+void operate::put_diameter2_into_setCandX(int vertex_no, NOW_VERTEX * vertex, EDGE * edge)
+{
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
+	{
+		if (OPvertex[edge[pos].to_vertex_no].vertex_position == 0)
+		{
+			Insert_into_Set(edge[pos].to_vertex_no, SetCandX, vertex, edge, 2);
+		}
+		if (OPvertex[edge[pos].to_vertex_no].vertex_position != 1)
+		{
+			int vertex_now = edge[pos].to_vertex_no;
+			int pos1 = vertex[vertex_now].first;
+			while (pos1 != -1)
+			{
+				if (OPvertex[edge[pos1].to_vertex_no].vertex_position == 0)
+					Insert_into_Set(edge[pos1].to_vertex_no, SetCandX, vertex, edge, 2);
+				pos1 = edge[pos1].next;
+			}
+		}
+		pos = edge[pos].next;
+	}
+}
+
+void operate::get_diameter2_out_setCandX(int vertex_no, NOW_VERTEX * vertex, EDGE * edge)
+{
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
+	{
+		if (OPvertex[edge[pos].to_vertex_no].vertex_position == 1)
+		{
+			continue;
+		}
+		int judge_ans = judge_isIn_VerterSetX_inDiameter2(edge[pos].to_vertex_no, vertex, edge);
+		if (judge_ans == 1)
+			continue;
+		else if (judge_ans == 2)
+		{
+
+		}
+	}
+}
+
+AvlTree* operate::Insert_into_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex, EDGE *edge, int kind)
+{
+	if (kind == 1)
+		OPvertex[vertex_no].vertex_position = 1;
+	else if (kind == 2)
+		OPvertex[vertex_no].vertex_position = 2;
+
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
+	{
+		if (kind == 1)
+			OPvertex[edge[pos].to_vertex_no].indeg_vertex_set_X++;
+		else if (kind == 2)
+			OPvertex[edge[pos].to_vertex_no].exdeg_vertex_set_CandX;
+		pos = edge[pos].next;
+	}
+
+	if (T == NULL)
+	{
+		T = (AvlTree*)malloc(sizeof(struct AvlTree));
+		T->vertex_no = vertex_no;
+		T->Height = 0;
+
+		T->left = NULL;
+		T->right = NULL;
+	}
+
+	else if (vertex_no < T->vertex_no)
+	{
+		T->left = Insert_into_Set(vertex_no, T->left, vertex, edge, kind);
+		if (get_height(T->left) - get_height(T->right) == 2)
+		{
+			if (vertex_no < T->left->vertex_no)
+				T = left_left(T);
+			else
+				T = left_right(T);
+		}
+	}
+
+	else
+	{
+		T->right = Insert_into_Set(vertex_no, T->right, vertex, edge, kind);
+		if (get_height(T->right) - get_height(T->left) == 2)
+		{
+			if (vertex_no < T->right->vertex_no)
+				T = right_left(T);
+			else
+				T = right_right(T);
+		}
+	}
+	T->Height = max(get_height(T->left), get_height(T->right)) + 1;
+	put_diameter2_into_setCandX(vertex_no, vertex, edge);
+	return T;
+}
+
+AvlTree* operate::Delete_from_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex, EDGE *edge, int kind)
+{
+	OPvertex[vertex_no].vertex_position = 0;
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
+	{
+		if (kind == 1)
+			OPvertex[edge[pos].to_vertex_no].indeg_vertex_set_X--;
+		else if (kind == 2)
+			OPvertex[edge[pos].to_vertex_no].exdeg_vertex_set_CandX--;
+		pos = edge[pos].next;
+	}
+
+	if (T == NULL)return NULL;
+	else
+	{
+		if (T->vertex_no == vertex_no)
+		{
+			if (T->right == NULL)
+			{
+				AvlTree* tem = T;
+				T = T->left;
+				free(tem);
+			}
+			else
+			{
+				AvlTree* tem = T->right;
+				while (tem->left != NULL)
+				{
+					tem = tem->left;
+				}
+				T->vertex_no = tem->vertex_no;
+				T->right = Delete_from_Set(T->vertex_no, T->right, vertex, edge, kind);
+				T->Height = max(get_height(T->left), get_height(T->right)) + 1;
+			}
+			return T;
+		}
+		else if (vertex_no > T->vertex_no)
+		{
+			T->right = Delete_from_Set(vertex_no, T->right, vertex, edge, kind);
+		}
+		else
+		{
+			T->left = Delete_from_Set(vertex_no, T->left, vertex, edge, kind);
+		}
+
+		T->Height = max(get_height(T->left), get_height(T->right)) + 1;
+		if (T->left != NULL)
+			T->left = balance(T->left);
+		if (T->right != NULL)
+			T->right = balance(T->right);
+		if (T != NULL)
+			T = balance(T);
+		return T;
+	}
+}
+
+AvlTree* operate::balance(AvlTree* T)
+{
+	if (get_height(T->left) - get_height(T->right) == 2)
+	{
+		if (get_height(T->left->left)>get_height(T->left->right))
+		{
+			T = left_left(T);
+		}
+		else
+		{
+			T = left_right(T);
+		}
+	}
+	else if (get_height(T->right) - get_height(T->left) == 2)
+	{
+		if (get_height(T->right) - get_height(T->left))
+		{
+			T = right_right(T);
+		}
+		else
+		{
+			T = right_left(T);
+		}
+	}
+	else return T;
+}
