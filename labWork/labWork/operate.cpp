@@ -4,12 +4,12 @@ operate::operate()
 {
 	memset(OPvertex, 0, sizeof OPvertex);
 	min_deg_vertex.min_deg = maxn;
+	SetCandX_size = SetX_size = 0;
 }
 
 operate::~operate()
 {
-	vertex_set_X.clear();
-	vertex_set_CandX.clear();
+
 }
 
 void operate::vertex_remove_on_minSize(int min_size, double gamma, int vertex_num, int edge_num, PRE_VERTEX *pre_vertex, EDGE *pre_edge)
@@ -44,93 +44,61 @@ void operate::vertex_judge_by_minSize(int vertex_no, int minDeg_num, PRE_VERTEX 
 	return;
 }
 
-void operate::delete_from_vertex_set_X(int delete_vertex_no, GRAPH &ggraph)
-{
-	for (int i = 0; i < ggraph.graph[delete_vertex_no].size(); i++)
-	{
-		if (OPvertex[ggraph.graph[delete_vertex_no][i].to_vertex_no].vertex_position == 1)
-			continue;
-		int judge_ans = judge_isIn_VerterSetX_inDiameter2(ggraph.graph[delete_vertex_no][i].to_vertex_no, ggraph);
-		if (judge_ans == 1)
-		{
-			continue;
-		}
-		else if (judge_ans == 2)
-		{
-			int now_vertex_no = ggraph.graph[delete_vertex_no][i].to_vertex_no;
-			for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
-			{
-				int judge_ans1 = judge_isIn_VerterSetX_inDiameter2(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
-				if (judge_ans1 == 1 || judge_ans1 == 2)
-				{
-					continue;
-				}
-				else delete_from_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
-			}
-		}
-		else if (judge_ans == 0)
-		{
-			delete_from_vertex_set_CandX(ggraph.graph[delete_vertex_no][i].to_vertex_no, ggraph);
-			int now_vertex_no = ggraph.graph[delete_vertex_no][i].to_vertex_no;
-			for (int j = 0; j < ggraph.graph[now_vertex_no].size(); j++)
-			{
-				int judge_ans1 = judge_isIn_VerterSetX_inDiameter2(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
-				if (judge_ans1 == 1 || judge_ans1 == 2)
-				{
-					continue;
-				}
-				else delete_from_vertex_set_CandX(ggraph.graph[now_vertex_no][j].to_vertex_no, ggraph);
-			}
-		}
-	}
-}
-
 void operate::find_UpperBound_in_set_X(double gamma)
 {
-	set <int>::iterator it;
 	total_indeg_set_X = 0;
-	for (it = vertex_set_X.begin(); it != vertex_set_X.end(); it++)
+	min_deg_vertex.min_deg = maxn;
+	//initialize the data
+
+	int *all_in_setX, numX = 0;
+	all_in_setX = new int[maxn];
+	Printf_tree(SetX, all_in_setX, numX);
+	for (int i = 0; i < numX; i++)
 	{
-		if (OPvertex[*it].indeg_vertex_set_X + OPvertex[*it].exdeg_vertex_set_CandX < min_deg_vertex.min_deg)
+		if (OPvertex[all_in_setX[i]].indeg_vertex_set_X + OPvertex[all_in_setX[i]].exdeg_vertex_set_CandX < min_deg_vertex.min_deg)
 		{
-			min_deg_vertex.min_deg = OPvertex[*it].indeg_vertex_set_X + OPvertex[*it].exdeg_vertex_set_CandX;
-			min_deg_vertex.vertex_no = *it;
+			min_deg_vertex.min_deg = OPvertex[all_in_setX[i]].indeg_vertex_set_X + OPvertex[all_in_setX[i]].exdeg_vertex_set_CandX;
+			min_deg_vertex.vertex_no = all_in_setX[i];
 		}
-		total_indeg_set_X += OPvertex[*it].indeg_vertex_set_X;
+		total_indeg_set_X += OPvertex[all_in_setX[i]].indeg_vertex_set_X;
 	}
-	upper_bound_Umin_X = (int)(1.0*min_deg_vertex.min_deg / gamma) + 1 - vertex_set_X.size();
+
+	upper_bound_Umin_X = (int)(1.0*min_deg_vertex.min_deg / gamma) + 1 - SetX_size;
 
 	int *maxT_indeg_CandX = new int[upper_bound_Umin_X];
 
-	int num = 0;
-	for (it = vertex_set_CandX.begin(); it != vertex_set_CandX.end(); it++, num++)
+	int *all_in_CandX, numCandX = 0;
+	all_in_CandX = new int[maxn];
+	Printf_tree(SetCandX, all_in_CandX, numCandX);
+	for (int i = 0; i < numCandX; i++)
 	{
-		if (num > upper_bound_Umin_X - 1)
+		if (i > upper_bound_Umin_X - 1)
 		{
-			int temp = OPvertex[*it].indeg_vertex_set_X;
-			if (temp > maxT_indeg_CandX[0]) 
+			int temp = OPvertex[all_in_CandX[i]].indeg_vertex_set_X;
+			if (temp > maxT_indeg_CandX[0])
 			{
 				maxT_indeg_CandX[0] = temp;
 				Min_heap_Adjust(maxT_indeg_CandX, 0, upper_bound_Umin_X - 1);
 			}
 		}
-		else 
+		else
 		{
-			int temp = OPvertex[*it].indeg_vertex_set_X;
-			maxT_indeg_CandX[num] = temp;
-			if (num == upper_bound_Umin_X - 1)//bulid Min_heap
+			int temp = OPvertex[all_in_CandX[i]].indeg_vertex_set_X;
+			maxT_indeg_CandX[i] = temp;
+			if (i == upper_bound_Umin_X - 1)
 			{
 				for (int j = (upper_bound_Umin_X - 1 - 1) / 2; j >= 0; j--)
 					Min_heap_Adjust(maxT_indeg_CandX, j, upper_bound_Umin_X - 1);
 			}
 		}
 	}
+
 	Min_heap_Sort(maxT_indeg_CandX, 0, upper_bound_Umin_X - 1);
 	int total_indeg_set_CandX = 0;
 	for (int i = 0; i < upper_bound_Umin_X; i++)
 		total_indeg_set_CandX += maxT_indeg_CandX[i];
 	
-	int setX_size = vertex_set_X.size();
+	int setX_size = SetX_size;
 	int product = (int)(1.0*gamma*(setX_size + upper_bound_Umin_X - 1));
 	if (product < 1.0*gamma*(setX_size + upper_bound_Umin_X - 1))
 		product++;
@@ -157,20 +125,29 @@ void operate::find_UpperBound_in_set_X(double gamma)
 			upper_bound_UX = 0;
 	}
 
+	delete[] all_in_setX;
+	delete[] all_in_CandX;
 	delete[] maxT_indeg_CandX;
 }
 
 void operate::find_LowerBound_in_set_X(double gamma)
 {
-	set <int>::iterator it;
 	int min_indeg_in_set_X = maxn;
 	total_indeg_set_X = 0;
-	for (it = vertex_set_X.begin(); it != vertex_set_X.end(); it++)
+
+	int *all_in_setX, numX = 0;
+	all_in_setX = new int[maxn];
+	Printf_tree(SetX, all_in_setX, numX);
+	for (int i = 0; i < numX; i++)
 	{
-		min_indeg_in_set_X = min(min_indeg_in_set_X, OPvertex[*it].indeg_vertex_set_X);
-		total_indeg_set_X += OPvertex[*it].indeg_vertex_set_X;
+		if (OPvertex[all_in_setX[i]].indeg_vertex_set_X < min_indeg_in_set_X)
+		{
+			min_indeg_in_set_X = OPvertex[all_in_setX[i]].indeg_vertex_set_X;
+		}
+		total_indeg_set_X += OPvertex[all_in_setX[i]].indeg_vertex_set_X;
 	}
-	int size_X = vertex_set_X.size();
+
+	int size_X = SetX_size;
 	for (int i = 0;; i++)
 	{
 		int product = (int)(1.0*gamma*(size_X + i - 1));
@@ -182,14 +159,18 @@ void operate::find_LowerBound_in_set_X(double gamma)
 			break;
 		}
 	}
-	int size_CandX = vertex_set_CandX.size();
+
+	int size_CandX = SetCandX_size;
 	int *maxN_indeg_CandX = new int[size_CandX];
-	int num = 0, total_indeg_set_CandX = 0;
-	for (it = vertex_set_CandX.begin(); it != vertex_set_CandX.end(); it++, num++)
-	{
-		maxN_indeg_CandX[num] = OPvertex[*it].indeg_vertex_set_X;
-	}
+	int *all_in_CandX, numCandX = 0;
+	all_in_CandX = new int[maxn];
+	Printf_tree(SetCandX, all_in_CandX, numCandX);
+
+	for (int i = 0; i < numCandX; i++)
+		maxN_indeg_CandX[i] = OPvertex[all_in_CandX[i]].indeg_vertex_set_X;
 	sort(maxN_indeg_CandX, maxN_indeg_CandX + size_CandX);//indeg in CandX increment
+
+	int total_indeg_set_CandX = 0;
 	for (int i = 0; i < Lower_bound_Lmin_X - 1; i++)
 		total_indeg_set_CandX += maxN_indeg_CandX[size_CandX - 1 - i];
 	int i;
@@ -210,6 +191,8 @@ void operate::find_LowerBound_in_set_X(double gamma)
 		Lower_bound_UX = size_CandX + 1;
 
 	delete[] maxN_indeg_CandX;
+	delete[] all_in_CandX;
+	delete[] all_in_setX;
 }
 
 void operate::Min_heap_Adjust(int *arr, int start, int end)
@@ -323,13 +306,14 @@ AvlTree* operate::right_left(AvlTree* k1)
 	return right_right(k1);
 }
 
-void operate::Printf_tree(AvlTree* T)
+void operate::Printf_tree(AvlTree* T, int *vertex_in_set, int &num)
 {
 	if (T->left != NULL)
-		Printf_tree(T->left);
-	printf("%d ", T->vertex_no);
+		Printf_tree(T->left, vertex_in_set, num);
+	//printf("%d ", T->vertex_no);
+	vertex_in_set[num++] = T->vertex_no;
 	if (T->right != NULL)
-		Printf_tree(T->right);
+		Printf_tree(T->right, vertex_in_set, num);
 }
 
 void operate::put_diameter2_into_setCandX(int vertex_no, NOW_VERTEX * vertex, EDGE * edge)
@@ -363,24 +347,53 @@ void operate::get_diameter2_out_setCandX(int vertex_no, NOW_VERTEX * vertex, EDG
 	{
 		if (OPvertex[edge[pos].to_vertex_no].vertex_position == 1)
 		{
+			pos = edge[pos].next;
 			continue;
 		}
 		int judge_ans = judge_isIn_VerterSetX_inDiameter2(edge[pos].to_vertex_no, vertex, edge);
+		
 		if (judge_ans == 1)
+		{
+			pos = edge[pos].next;
 			continue;
+		}
 		else if (judge_ans == 2)
 		{
-
+			int vertex_now = edge[pos].to_vertex_no;
+			int pos1 = vertex[vertex_now].first;
+			while (pos1 != -1)
+			{
+				int judge_ans1 = judge_isIn_VerterSetX_inDiameter2(edge[pos1].to_vertex_no, vertex, edge);
+				if (judge_ans1 == 1 || judge_ans1 == 2)
+					continue;
+				else Delete_from_Set(edge[pos1].to_vertex_no, SetCandX, vertex, edge, 2);
+				pos1 = edge[pos1].next;
+			}
 		}
+		else if (judge_ans == 0)
+		{
+			Delete_from_Set(edge[pos].to_vertex_no, SetCandX, vertex, edge, 2);
+			int vertex_now = edge[pos].to_vertex_no;
+			int pos1 = vertex[vertex_now].first;
+			while (pos1 != -1)
+			{
+				int judge_ans1 = judge_isIn_VerterSetX_inDiameter2(edge[pos1].to_vertex_no, vertex, edge);
+				if (judge_ans1 == 1 || judge_ans1 == 2)
+					continue;
+				else Delete_from_Set(edge[pos1].to_vertex_no, SetCandX, vertex, edge, 2);
+				pos1 = edge[pos1].next;
+			}
+		}
+		pos = edge[pos].next;
 	}
 }
 
 AvlTree* operate::Insert_into_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex, EDGE *edge, int kind)
 {
 	if (kind == 1)
-		OPvertex[vertex_no].vertex_position = 1;
+		OPvertex[vertex_no].vertex_position = 1, SetX_size++;
 	else if (kind == 2)
-		OPvertex[vertex_no].vertex_position = 2;
+		OPvertex[vertex_no].vertex_position = 2, SetCandX_size++;
 
 	int pos = vertex[vertex_no].first;
 	while (pos != -1)
@@ -426,12 +439,18 @@ AvlTree* operate::Insert_into_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex,
 		}
 	}
 	T->Height = max(get_height(T->left), get_height(T->right)) + 1;
-	put_diameter2_into_setCandX(vertex_no, vertex, edge);
+	if (kind == 1)
+		put_diameter2_into_setCandX(vertex_no, vertex, edge);
 	return T;
 }
 
 AvlTree* operate::Delete_from_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex, EDGE *edge, int kind)
 {
+	if (kind == 1)
+		SetX_size--;
+	else if (kind == 2)
+		SetCandX_size--;
+
 	OPvertex[vertex_no].vertex_position = 0;
 	int pos = vertex[vertex_no].first;
 	while (pos != -1)
@@ -443,7 +462,12 @@ AvlTree* operate::Delete_from_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex,
 		pos = edge[pos].next;
 	}
 
-	if (T == NULL)return NULL;
+	if (T == NULL)
+	{
+		if (kind == 1)
+			get_diameter2_out_setCandX(vertex_no, vertex, edge);
+		return NULL;
+	}
 	else
 	{
 		if (T->vertex_no == vertex_no)
@@ -483,6 +507,9 @@ AvlTree* operate::Delete_from_Set(int vertex_no, AvlTree* T, NOW_VERTEX *vertex,
 			T->right = balance(T->right);
 		if (T != NULL)
 			T = balance(T);
+
+		if (kind == 1)
+			get_diameter2_out_setCandX(vertex_no, vertex, edge);
 		return T;
 	}
 }
