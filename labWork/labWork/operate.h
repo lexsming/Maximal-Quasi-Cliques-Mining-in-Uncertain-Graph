@@ -42,7 +42,7 @@ public:
 	void vertex_judge_by_minSize(int vertex_no, int minDeg_num, PRE_VERTEX *pre_vertex, EDGE *pre_edge);
 	
 	void find_UpperBound_in_set_X(double gamma);
-	void find_LowerBound_in_set_X(double gamma);
+	void find_LowerBound_in_set_X(double gamma, double alpha, int min_size, NOW_VERTEX *vertex, EDGE *edge);
 	void Min_heap_Adjust(int *arr, int start, int end);
 	void Min_heap_Sort(int *arr, int start, int end);
 

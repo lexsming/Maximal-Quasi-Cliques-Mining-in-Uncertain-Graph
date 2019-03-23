@@ -4,9 +4,14 @@
 
 GRAPH::GRAPH()
 {
+	/*
 	now_vertex = new NOW_VERTEX[maxn];
 	for (int i = 0; i < maxn; i++)
 		now_vertex[i].first = -1;
+	*/
+	pre_vertex = new PRE_VERTEX[maxn];
+	for (int i = 0; i < maxn; i++)
+		pre_vertex[i].first = -1;
 }
 
 

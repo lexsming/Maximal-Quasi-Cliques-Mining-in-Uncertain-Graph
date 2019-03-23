@@ -130,7 +130,7 @@ void operate::find_UpperBound_in_set_X(double gamma)
 	delete[] maxT_indeg_CandX;
 }
 
-void operate::find_LowerBound_in_set_X(double gamma)
+void operate::find_LowerBound_in_set_X(double gamma, double alpha, int min_size, NOW_VERTEX *vertex, EDGE *edge)
 {
 	int min_indeg_in_set_X = maxn;
 	total_indeg_set_X = 0;
@@ -189,6 +189,21 @@ void operate::find_LowerBound_in_set_X(double gamma)
 	}
 	if (i == size_CandX)
 		Lower_bound_UX = size_CandX + 1;
+
+	int product = 1.0*gamma*(max(min_size, Lower_bound_UX) - 1);
+	if (product < 1.0*gamma*(max(min_size, Lower_bound_UX) - 1))
+		product++;
+	for (int i = 0; i < numCandX; i++)
+	{
+		if (vertex[all_in_CandX[i]].degree == product)
+		{
+			int pos = vertex[all_in_CandX[i]].first;
+			if (edge[pos].probability < alpha)
+			{
+				Delete_from_Set(all_in_CandX[i], SetCandX, vertex, edge, 2);
+			}
+		}
+	}
 
 	delete[] maxN_indeg_CandX;
 	delete[] all_in_CandX;
