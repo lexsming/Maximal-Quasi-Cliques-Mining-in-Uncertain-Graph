@@ -35,7 +35,7 @@ public:
 	SET_VERTEX OPvertex[maxn];
 	MIN_DEG min_deg_vertex;
 	int upper_bound_Umin_X, upper_bound_UX, total_indeg_set_X;
-	int Lower_bound_Lmin_X, Lower_bound_UX;
+	int Lower_bound_Lmin_X, Lower_bound_LX;
 	int SetX_size, SetCandX_size;
 	
 	void vertex_remove_on_minSize(int min_size, double gamma, int vertex_num, int edge_num, PRE_VERTEX *pre_vertex, EDGE *pre_edge);
@@ -43,6 +43,7 @@ public:
 	
 	void find_UpperBound_in_set_X(double gamma);
 	void find_LowerBound_in_set_X(double gamma, double alpha, int min_size, NOW_VERTEX *vertex, EDGE *edge);
+	void tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX *vertex, EDGE *edge);
 	void Min_heap_Adjust(int *arr, int start, int end);
 	void Min_heap_Sort(int *arr, int start, int end);
 

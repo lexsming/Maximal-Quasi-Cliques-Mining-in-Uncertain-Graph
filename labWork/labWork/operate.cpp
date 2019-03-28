@@ -183,15 +183,15 @@ void operate::find_LowerBound_in_set_X(double gamma, double alpha, int min_size,
 		product *= size_X;
 		if (total_indeg_set_X + total_indeg_set_CandX >= product)
 		{
-			Lower_bound_UX = i + 1;
+			Lower_bound_LX = i + 1;
 			break;
 		}
 	}
 	if (i == size_CandX)
-		Lower_bound_UX = size_CandX + 1;
+		Lower_bound_LX = size_CandX + 1;
 
-	int product = 1.0*gamma*(max(min_size, Lower_bound_UX) - 1);
-	if (product < 1.0*gamma*(max(min_size, Lower_bound_UX) - 1))
+	int product = 1.0*gamma*(max(min_size, Lower_bound_LX) - 1);
+	if (product < 1.0*gamma*(max(min_size, Lower_bound_LX) - 1))
 		product++;
 	for (int i = 0; i < numCandX; i++)
 	{
@@ -208,6 +208,80 @@ void operate::find_LowerBound_in_set_X(double gamma, double alpha, int min_size,
 	delete[] maxN_indeg_CandX;
 	delete[] all_in_CandX;
 	delete[] all_in_setX;
+}
+
+void operate::tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX * vertex, EDGE * edge)
+{
+	int Klower = (int)(1.0*gamma*(SetX_size + Lower_bound_LX - 1));
+	if (Klower < 1.0*gamma*(SetX_size + Lower_bound_LX - 1))
+		Klower++;
+	int Kupper = (int)(1.0*gamma*(SetX_size + upper_bound_UX - 1));
+	if (Kupper < 1.0*gamma*(SetX_size + upper_bound_UX - 1))
+		Kupper++;
+
+	int *all_in_setX, numX = 0, Kmin = maxn;
+	all_in_setX = new int[maxn];
+	Printf_tree(SetX, all_in_setX, numX);
+	for (int i = 0; i < numX; i++)
+	{
+		int num_X_CandX = 0;
+		double Pmax = 0;
+		int pos = vertex[all_in_setX[i]].first;
+		while (pos != -1)
+		{
+			if (OPvertex[edge[pos].to_vertex_no].vertex_position == 1 || OPvertex[edge[pos].to_vertex_no].vertex_position == 2)
+			{
+				num_X_CandX++;
+				Pmax = max(Pmax, edge[pos].probability);
+			}
+			pos = edge[pos].next;
+		}
+		double sum = 0, last = 0;
+		for (int j = num_X_CandX; j > Kupper; j--)
+		{
+			if (last == 0)
+			{
+				last = 1.0;
+				for (int k = num_X_CandX; k > 0; k--)
+				{
+					last *= Pmax;
+				}
+				sum += last;
+			}
+			else
+			{
+				last = 1.0*last / (num_X_CandX - j + 1)*i*(1 - Pmax) / Pmax;
+				sum += last;
+			}
+		}
+		for (int j = Kupper; j >= Klower; j--)
+		{
+			if (j > num_X_CandX)
+				continue;
+			if (last == 0)
+			{
+				last = 1.0;
+				for (int k = num_X_CandX; k > 0; k--)
+				{
+					last *= Pmax;
+				}
+				sum += last;
+			}
+			else
+			{
+				last = 1.0*last / (num_X_CandX - j + 1)*i*(1 - Pmax) / Pmax;
+				sum += last;
+			}
+
+			if (sum >= alpha)
+			{
+				Kmin = min(Kmin, j);
+				break;
+			}
+		}
+	}
+	int U_uncertain = (int)(1.0*Kmin / gamma) - SetX_size + 1;
+	upper_bound_UX = min(upper_bound_UX, U_uncertain);
 }
 
 void operate::Min_heap_Adjust(int *arr, int start, int end)
