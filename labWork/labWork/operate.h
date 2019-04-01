@@ -31,7 +31,7 @@ struct AvlTree {
 class operate
 {
 public:
-	AvlTree * SetX, *SetCandX;
+	AvlTree *SetX, *SetCandX;
 	SET_VERTEX OPvertex[maxn];
 	MIN_DEG min_deg_vertex;
 	int upper_bound_Umin_X, upper_bound_UX, total_indeg_set_X;
@@ -44,6 +44,8 @@ public:
 	void find_UpperBound_in_set_X(double gamma);
 	void find_LowerBound_in_set_X(double gamma, double alpha, int min_size, NOW_VERTEX *vertex, EDGE *edge);
 	void tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX *vertex, EDGE *edge);
+	void prune_probability_of_vertex(double gamma, double alpha, NOW_VERTEX *vertex, EDGE *edge);
+	void iteratively_judge_probability_of_vertex(int vertex_no, double gamma, double alpha, NOW_VERTEX *vertex, EDGE *edge);
 	void Min_heap_Adjust(int *arr, int start, int end);
 	void Min_heap_Sort(int *arr, int start, int end);
 

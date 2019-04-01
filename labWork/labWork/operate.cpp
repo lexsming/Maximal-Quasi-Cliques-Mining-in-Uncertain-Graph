@@ -250,7 +250,7 @@ void operate::tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX
 			}
 			else
 			{
-				last = 1.0*last / (num_X_CandX - j + 1)*i*(1 - Pmax) / Pmax;
+				last = 1.0*last / (num_X_CandX - j + 1)*j*(1 - Pmax) / Pmax;
 				sum += last;
 			}
 		}
@@ -266,10 +266,10 @@ void operate::tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX
 					last *= Pmax;
 				}
 				sum += last;
-			}
+			}	
 			else
 			{
-				last = 1.0*last / (num_X_CandX - j + 1)*i*(1 - Pmax) / Pmax;
+				last = 1.0*last / (num_X_CandX - j + 1)*j*(1 - Pmax) / Pmax;
 				sum += last;
 			}
 
@@ -282,6 +282,73 @@ void operate::tighted_UpperBound_in_set_X(double gamma, double alpha, NOW_VERTEX
 	}
 	int U_uncertain = (int)(1.0*Kmin / gamma) - SetX_size + 1;
 	upper_bound_UX = min(upper_bound_UX, U_uncertain);
+}
+
+void operate::prune_probability_of_vertex(double gamma, double alpha, NOW_VERTEX * vertex, EDGE * edge)
+{
+	int *all_in_setCandX, numCandX = 0;
+	all_in_setCandX = new int[maxn];
+	Printf_tree(SetCandX, all_in_setCandX, numCandX);
+
+	for (int i = 0; i < numCandX; i++)
+	{
+		if (OPvertex[all_in_setCandX[i]].vertex_position == 2)
+		{
+			iteratively_judge_probability_of_vertex(all_in_setCandX[i], gamma, alpha, vertex, edge);
+		}
+		else continue;
+	}
+}
+
+void operate::iteratively_judge_probability_of_vertex(int vertex_no, double gamma, double alpha, NOW_VERTEX * vertex, EDGE * edge)
+{
+	int Klower = (int)(1.0*gamma*(abs(SetX_size + Lower_bound_LX) - 1));
+	if (Klower < 1.0*gamma*(abs(SetX_size + Lower_bound_LX) - 1))
+		Klower++;
+
+	int num_X_CandX = 0;
+	double Pmax = 0;
+	int pos = vertex[vertex_no].first;
+	while (pos != -1)
+	{
+		if (OPvertex[edge[pos].to_vertex_no].vertex_position == 1 || OPvertex[edge[pos].to_vertex_no].vertex_position == 2)
+		{
+			num_X_CandX++;
+			Pmax = max(Pmax, edge[pos].probability);
+		}
+		pos = edge[pos].next;
+	}
+
+	double sum = 0, last = 0;
+	for (int j = num_X_CandX; j >= Klower; j--)
+	{
+		if (last == 0)
+		{
+			last = 1.0;
+			for (int k = num_X_CandX; k > 0; k--)
+			{
+				last *= Pmax;
+			}
+			sum += last;
+		}
+		else
+		{
+			last = 1.0*last / (num_X_CandX - j + 1)*j*(1 - Pmax) / Pmax;
+			sum += last;
+		}
+	}
+
+	if (sum < alpha)
+	{
+		Delete_from_Set(vertex_no, SetCandX, vertex, edge, 2);
+		pos = vertex[vertex_no].first;
+		while (pos != -1)
+		{
+			if (OPvertex[edge[pos].to_vertex_no].vertex_position == 2)
+				iteratively_judge_probability_of_vertex(edge[pos].to_vertex_no, gamma, alpha, vertex, edge);
+			pos = edge[pos].next;
+		}
+	}
 }
 
 void operate::Min_heap_Adjust(int *arr, int start, int end)
